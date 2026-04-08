@@ -86,7 +86,6 @@ class PriorityQueue:
     def __len__(self): return len(self.items)
 
 
-# Busca em largura
 def breadth_first_search(problem):
     nos_explorados = 0
     node = Node(problem.initial)
@@ -149,6 +148,31 @@ def depth_first_recursive_search(problem, node=None, nos_explorados=None):
             if result != failure:
                 return result, nos
         return failure, nos_explorados[0]
+    
+
+def best_first_search(problem, f):
+    nos_explorados = 0
+    node = Node(problem.initial)
+    frontier = PriorityQueue([node], key=f)
+    reached = {problem.initial: node}
+    while frontier:
+        node = frontier.pop()
+        nos_explorados += 1
+        if problem.is_goal(node.state):
+            return node, nos_explorados
+        for child in expand(problem, node):
+            s = child.state
+            if s not in reached or child.path_cost < reached[s].path_cost:
+                reached[s] = child
+                frontier.add(child)
+    return failure, nos_explorados
+
+def g(n): return n.path_cost
+
+def astar_search(problem, h=None):
+    """Search nodes with minimum f(n) = g(n) + h(n)."""
+    h = h or problem.h
+    return best_first_search(problem, f=lambda n: g(n) + h(n))
 
 
 # |=====================|
@@ -201,8 +225,6 @@ class Estado:
             total_bebidas_prontas[1] += 1
             pedido_quentes -= 1
             return Estado(self.garcom_pos, self.garcom_carga, self.bebidas, self.limpeza, total_bebidas_prontas)
-
-
 
     def pegar_bebida(self):
         if self.garcom_pos == 'bar' and self.garcom_carga == [0,0]:
@@ -275,32 +297,47 @@ class CafeteriaProblem(Problem):
 #problema1 = Estado('bar', None, [0, 2, 0, 0], [0, 0, 1, 1])
 problema1 = Estado('bar', [0,0], [(0,0), (2,0), (0,0), (0,0)], [0, 0, 1, 1], [0,0])
 problema2 = Estado('bar', [0,0], [(0,0), (0,0), (2,2), (0,0)], [1, 0, 0, 0], [0,0])
+problema3 = Estado('bar', [0,0], [(0,2), (0,0), (0,0), (0,2)], [0, 0, 1, 0], [0,0])
+problema4 = Estado('bar', [0,0], [(2,0), (0,0), (0,4), (2,0)], [0, 1, 0, 0], [0,0])
 p1 = CafeteriaProblem(initial=problema1)
 p2 = CafeteriaProblem(initial=problema2)
+p3 = CafeteriaProblem(initial=problema3)
+p4 = CafeteriaProblem(initial=problema4)
+
+selecionado = p1
 
 print("=== BFS ===")
 inicio = time.time()
-resultado, nos = breadth_first_search(p1)
+resultado, nos = breadth_first_search(selecionado)
 fim = time.time()
 print(f"Estado final: {resultado.state}")
 print(f"Nós explorados: {nos}")
 print("Ações:", path_actions(resultado))
-print(f"Tempo: {fim - inicio:.3f}s")
+print(f"Tempo: {fim - inicio:.4f}s")
 
-print("\n=== Depth First ===")
-inicio = time.time()
-resultado, nos = depth_first_recursive_search(p1)
-fim = time.time()
-print(f"Estado final: {resultado.state}")
-print(f"Nós explorados: {nos}")
-print("Ações:", path_actions(resultado))
-print(f"Tempo: {fim - inicio:.3f}s")
+# print("\n=== Depth First ===")
+# inicio = time.time()
+# resultado, nos = depth_first_recursive_search(selecionado)
+# fim = time.time()
+# print(f"Estado final: {resultado.state}")
+# print(f"Nós explorados: {nos}")
+# print("Ações:", path_actions(resultado))
+# print(f"Tempo: {fim - inicio:.4f}s")
 
-print("\n=== Iterative Deepening ===")
+# print("\n=== Iterative Deepening ===")
+# inicio = time.time()
+# resultado, nos = iterative_deepening_search(selecionado)
+# fim = time.time()
+# print(f"Estado final: {resultado.state}")
+# print(f"Nós explorados: {nos}")
+# print("Ações:", path_actions(resultado))
+# print(f"Tempo: {fim - inicio:.4f}s")
+
+print("=== A* ===")
 inicio = time.time()
-resultado, nos = iterative_deepening_search(p1)
+resultado, nos = astar_search(selecionado)
 fim = time.time()
 print(f"Estado final: {resultado.state}")
 print(f"Nós explorados: {nos}")
 print("Ações:", path_actions(resultado))
-print(f"Tempo: {fim - inicio:.3f}s")
+print(f"Tempo: {fim - inicio:.4f}s")
